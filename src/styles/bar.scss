@@ -1,0 +1,41 @@
+@mixin bar-active {
+  background-color: #1e1e1e;
+  color: #ffd04b;
+}
+
+.bar {
+  width: 15%;
+  height: 100%;
+  background-color: #232323;
+
+  > .bar-content {
+    height: 100%;
+    --el-menu-text-color: white;
+    --el-menu-bg-color: #232323;
+    display: flex;
+    flex-direction: column;
+
+    > img {
+      width: 70%;
+      display: block;
+      margin: 20px 0 0 20px;
+    }
+
+    > .el-menu {
+      width: 100%;
+      margin-top: 20px;
+      border: none;
+
+      > .el-menu-item {
+        &:hover {
+          @include bar-active
+        }
+      }
+
+      > .is-active {
+        @include bar-active
+      }
+    }
+  }
+}
+

@@ -1,0 +1,35 @@
+$padding: 0 30px;
+
+.box {
+  background-color: white;
+  width: 90%;
+  height: 86%;
+  margin-top: 35px;
+  border: 1px solid #e9ebef;
+  display: flex;
+  flex-direction: column;
+
+  > .header {
+    height: 80px;
+    border: 1px solid #e9ebef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $padding;
+
+    > p {
+      font-size: 16px;
+      color: #303133;
+    }
+
+    > .btn-area {
+      display: flex;
+      justify-content: space-around;
+    }
+  }
+
+  > .content {
+    flex: 1;
+    padding: $padding;
+  }
+}
