@@ -4,9 +4,17 @@
     "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src/**/*", "vite-env.d.ts"],
-  "files": ["node_modules", "**/*.spec.ts"],
+  "include": [
+    "src/**/*",
+    "vite-env.d.ts"
+  ],
+  "files": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
 }

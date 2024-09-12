@@ -1,12 +1,12 @@
 <script setup lang="ts">
-defineProps<{title: string}>();
+defineProps<{ title: string }>();
 
 </script>
 
 <template>
   <div class="box">
     <div class="header">
-      <p>{{title}}</p>
+      <p>{{ title }}</p>
       <div class="btn-area">
         <slot name="btn-area"></slot>
       </div>

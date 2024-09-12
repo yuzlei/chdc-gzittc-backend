@@ -2,7 +2,7 @@
 import {ElMenu, ElMenuItem, ElIcon} from "element-plus"
 import {IBarList} from "@/types";
 
-defineProps<{bar: IBarList}>();
+defineProps<{ bar: IBarList }>();
 </script>
 
 <template>
@@ -15,7 +15,7 @@ defineProps<{bar: IBarList}>();
             <ElIcon>
               <component :is="item.icon"></component>
             </ElIcon>
-            <span>{{item.name}}管理</span>
+            <span>{{ item.name }}管理</span>
           </template>
         </ElMenuItem>
       </ElMenu>

@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import {ref, onMounted, watch} from "vue"
 import {ElMessage} from 'element-plus'
-import {ElButton, ElInput, ElTable, ElTableColumn, ElPagination, ElDialog, ElForm, ElFormItem, ElUpload} from "element-plus"
+import {
+  ElButton,
+  ElInput,
+  ElTable,
+  ElTableColumn,
+  ElPagination,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElUpload
+} from "element-plus"
 import {Search} from "@element-plus/icons-vue";
 import {barData, apiUrl} from "@/config"
 import {deepClone, formatTime, debounce} from "@/utils"
@@ -14,36 +24,36 @@ import type {IAbridgeUpdatesViewList, IAbridgeUpdatesView} from "@/types"
 
 const [{name}] = barData
 
-const formData:IAbridgeUpdatesView = {
+const formData: IAbridgeUpdatesView = {
   title: '',
   author: '',
   cover: '',
 }
 
-const cover:Ref<Array<UploadFile>> = ref([])
+const cover: Ref<Array<UploadFile>> = ref([])
 
 const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
 
-const deleteId:Ref<string> = ref("")
+const deleteId: Ref<string> = ref("")
 
-const state:Ref<boolean> = ref(false)
+const state: Ref<boolean> = ref(false)
 
-const deleteState:Ref<boolean> = ref(false)
+const deleteState: Ref<boolean> = ref(false)
 
-const total:Ref<number> = ref(10)
+const total: Ref<number> = ref(10)
 
-const searchValue:Ref<string> = ref("")
+const searchValue: Ref<string> = ref("")
 
-const pageNum:Ref<null | number> = ref(null)
+const pageNum: Ref<null | number> = ref(null)
 
-const num:Ref<number> = ref(1)
+const num: Ref<number> = ref(1)
 
 let tableNormalData: IAbridgeUpdatesViewList | null = null
 
 let tableData: Ref<IAbridgeUpdatesViewList> | null = ref(null)
 
- const handleSortChange = ({prop, order}): void => {
-  if(prop === "Date") {
+const handleSortChange = ({prop, order}): void => {
+  if (prop === "Date") {
     switch (order) {
       case "ascending":
         tableData.value = deepClone(tableData.value.sort((a, b) => new Date(a.createdAt).valueOf() - new Date(b.createdAt).valueOf()))
@@ -96,7 +106,7 @@ onMounted(async () => await getSearch(searchValue.value, num.value))
 
 const upload = async (): Promise<void> => {
   const data = new FormData()
-  for (const item in form.value) item !== "cover" ?  data.append(item, form.value[item]) : data.append('cover', cover.value[0]?.raw)
+  for (const item in form.value) item !== "cover" ? data.append(item, form.value[item]) : data.append('cover', cover.value[0]?.raw)
   try {
     await axios.post(`${apiUrl}/updates/`, data, {headers: {'content-type': 'multipart/form-data'}})
     ElMessage({
@@ -140,13 +150,14 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
       </div>
     </template>
   </ElDialog>
-  <ElDialog destroy-on-close class="dialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false" title="添加动态" width="500" v-model="state">
-    <ElForm style="max-width: 350px; margin-top: 10px; margin-left: 25px" :model="form" >
+  <ElDialog destroy-on-close class="dialog" :close-on-click-modal="false" :close-on-press-escape="false"
+            :show-close="false" title="添加动态" width="500" v-model="state">
+    <ElForm style="max-width: 350px; margin-top: 10px; margin-left: 25px" :model="form">
       <ElFormItem label="动态标题">
-        <ElInput v-model="form.title" />
+        <ElInput v-model="form.title"/>
       </ElFormItem>
       <ElFormItem label="动态作者">
-        <ElInput v-model="form.author" />
+        <ElInput v-model="form.author"/>
       </ElFormItem>
       <ElFormItem label="动态封面">
         <ElUpload action="#" accept=".jpg, .png" :auto-upload="false" v-model:file-list="cover" :limit="1">
@@ -168,8 +179,9 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
   </ElDialog>
   <content :title="`${name}管理`">
     <template #btn-area>
-      <ElInput :placeholder="`搜索${name}...`" v-model="searchValue" style="margin-right: 25px; width: 230px" :suffix-icon="Search"/>
-      <ElButton @click="state = true" type="primary">添加{{name}}</ElButton>
+      <ElInput :placeholder="`搜索${name}...`" v-model="searchValue" style="margin-right: 25px; width: 230px"
+               :suffix-icon="Search"/>
+      <ElButton @click="state = true" type="primary">添加{{ name }}</ElButton>
     </template>
     <template #content>
       <ElTable @sort-change="handleSortChange" :table-layout="'fixed'" :data="tableData">
@@ -200,7 +212,8 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
           </template>
         </ElTableColumn>
       </ElTable>
-      <ElPagination :hide-on-single-page="true" @current-change="currentChange" size="small" background layout="prev, pager, next" :total="total * pageNum" />
+      <ElPagination :hide-on-single-page="true" @current-change="currentChange" size="small" background
+                    layout="prev, pager, next" :total="total * pageNum"/>
     </template>
   </content>
 </template>
