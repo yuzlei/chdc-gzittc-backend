@@ -11,9 +11,10 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@types/node": "^22.1.0",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.7.7",
     "element-plus": "^2.8.1",
-    "marked": "^14.1.0",
     "pinia": "^2.2.1",
     "sass": "^1.77.8",
     "unplugin-element-plus": "^0.8.0",

@@ -1,0 +1,11 @@
+.content {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+
+  > .edit {
+    width: 60%;
+    height: 90%;
+    border: 1px solid #ccc
+  }
+}

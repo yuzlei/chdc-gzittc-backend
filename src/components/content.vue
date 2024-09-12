@@ -8,15 +8,11 @@ defineProps<{title: string}>();
     <div class="header">
       <p>{{title}}</p>
       <div class="btn-area">
-        <slot name="btn-area">
-
-        </slot>
+        <slot name="btn-area"></slot>
       </div>
     </div>
     <div class="content">
-      <slot name="content">
-
-      </slot>
+      <slot name="content"></slot>
     </div>
   </div>
 </template>

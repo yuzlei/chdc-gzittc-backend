@@ -1,4 +1,5 @@
-import {createRouter, createWebHistory, RouteRecordRaw} from "vue-router";
+import {createRouter, createWebHistory} from "vue-router";
+import type {RouteRecordRaw} from "vue-router"
 
 const routes: Readonly<RouteRecordRaw[]> = [{
     path: "/",
@@ -28,7 +29,12 @@ const routes: Readonly<RouteRecordRaw[]> = [{
         }],
     }],
 }, {
+    path: '/edit/:id',
+    name: "edit",
+    component: () => import("@/views/edit.vue"),
+}, {
     path: '/:catchAll(.*)',
+    name: "404",
     redirect: '/home/404',
 }]
 

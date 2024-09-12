@@ -1,5 +1,22 @@
 /**
  * @interface
+ * 导航栏接口定义
+ */
+interface IBar{
+    _id?: string,
+    name: string,
+    href: string,
+    icon?: any
+}
+
+/**
+ * @type
+ * 导航栏列表类型定义
+ */
+type IBarList = Array<IBar>
+
+/**
+ * @interface
  * 成员接口定义
  */
 interface IMember {
@@ -39,8 +56,8 @@ interface IAbridgeUpdatesView {
     _id?: string,
     title: string,
     cover: string,
-    ellipsis: string,
-    createdAt: string,
+    ellipsis?: string,
+    createdAt?: string,
     author: string
 }
 
@@ -60,6 +77,8 @@ interface IAbridgeUpdatesContent{
 }
 
 export {
+    IBar,
+    IBarList,
     IMember,
     IMemberList,
     IAchieve,
