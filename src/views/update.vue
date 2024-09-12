@@ -5,11 +5,9 @@ import {ElButton, ElInput, ElTable, ElTableColumn, ElPagination, ElDialog, ElFor
 import {Search} from "@element-plus/icons-vue";
 import {barData, apiUrl} from "@/config"
 import {deepClone, formatTime, debounce} from "@/utils"
-
 import content from "@/components/content.vue"
 import axios from "axios"
 import router from "@/router";
-
 import type {Ref} from "vue"
 import type {UploadFile} from "element-plus";
 import type {IAbridgeUpdatesViewList, IAbridgeUpdatesView} from "@/types"

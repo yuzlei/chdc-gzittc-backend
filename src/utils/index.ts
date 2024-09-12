@@ -23,8 +23,14 @@ const formatTime = (time: string): string => {
     return `${date.getFullYear()}年${('0' + (date.getMonth() + 1)).slice(-2)}月${('0' + date.getDate()).slice(-2)}日`
 }
 
+const setId = <T extends Record<string, any>>(data: Array<T>): Array<T & {id: number}> => deepClone(data).map(((item: T, i: number) => ({
+    ...item,
+    id: i + 1,
+})))
+
 export {
     deepClone,
     debounce,
-    formatTime
+    formatTime,
+    setId
 }
