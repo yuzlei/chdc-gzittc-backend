@@ -2,7 +2,7 @@ import {setId} from "@/utils";
 import {User, Management, Medal} from "@element-plus/icons-vue";
 import type {IBarList} from "@/types";
 
-const apiUrl: string = import.meta.env.VITE_API_URL || "http://localhost:3000"
+const apiUrl: string = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
 
 const barData: IBarList = setId([{
     name: "动态",

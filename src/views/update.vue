@@ -12,15 +12,21 @@ import {
   ElFormItem,
   ElUpload
 } from "element-plus"
+import {storeToRefs} from "pinia";
 import {Search} from "@element-plus/icons-vue";
 import {barData, apiUrl} from "@/config"
 import {deepClone, formatTime, debounce} from "@/utils"
+import defaultStore from "@/store"
 import content from "@/components/content.vue"
 import axios from "axios"
 import router from "@/router";
 import type {Ref} from "vue"
 import type {UploadFile} from "element-plus";
 import type {IAbridgeUpdatesViewList, IAbridgeUpdatesView} from "@/types"
+
+const store = defaultStore()
+
+const {limit} = storeToRefs(store)
 
 const [{name}] = barData
 
@@ -34,19 +40,33 @@ const cover: Ref<Array<UploadFile>> = ref([])
 
 const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
 
-const deleteId: Ref<string> = ref("")
+const deleteId: Ref<Array<string>> = ref([])
 
 const state: Ref<boolean> = ref(false)
 
 const deleteState: Ref<boolean> = ref(false)
 
-const total: Ref<number> = ref(10)
+const pageTotal: Ref<number | null> = ref(null)
 
-const searchValue: Ref<string> = ref("")
+interface Params{
+  page: number
+  sort: string | null
+  sortName: string
+  limit: number,
+  title_regex: string,
+  content_regex: string
+}
 
-const pageNum: Ref<null | number> = ref(null)
+const search: Ref<string> = ref("")
 
-const num: Ref<number> = ref(1)
+const params: Ref<Params> = ref({
+  page: 1,
+  sort: null,
+  sortName: "createAt",
+  limit: limit.value,
+  title_regex: "//",
+  content_regex: "//"
+})
 
 let tableNormalData: IAbridgeUpdatesViewList | null = null
 
@@ -54,7 +74,8 @@ let tableData: Ref<IAbridgeUpdatesViewList> | null = ref(null)
 
 const handleSortChange = ({prop, order}): void => {
   if (prop === "Date") {
-    switch (order) {
+    params.value.sort = order
+    switch (params.value.sort) {
       case "ascending":
         tableData.value = deepClone(tableData.value.sort((a, b) => new Date(a.createdAt).valueOf() - new Date(b.createdAt).valueOf()))
         break;
@@ -70,17 +91,18 @@ const handleSortChange = ({prop, order}): void => {
 
 const handleDelete = (id: string): void => {
   deleteState.value = true
-  deleteId.value = id
+  deleteId.value.push(id)
 }
 
 const deleteUpdate = async (): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}/updates/${deleteId.value}`)
+    await axios.delete(`${apiUrl}/updates/delete/`, {
+      params: {ids: deleteId.value.join(",")}})
     ElMessage({
       message: '删除动态成功',
       type: 'success'
     })
-    await getSearch(searchValue.value, num.value)
+    await getData(params.value)
   } catch (e) {
     ElMessage({
       message: '删除动态失败',
@@ -88,13 +110,13 @@ const deleteUpdate = async (): Promise<void> => {
     })
   } finally {
     deleteState.value = false
-    deleteId.value = ""
+    deleteId.value = []
   }
 }
 
 const currentChange = async (value: number): Promise<void> => {
-  num.value = value
-  await getSearch(searchValue.value, num.value)
+  params.value.page = value
+  await getData(params.value)
 }
 
 const clearForm = (): void => {
@@ -102,18 +124,18 @@ const clearForm = (): void => {
   cover.value = []
 }
 
-onMounted(async () => await getSearch(searchValue.value, num.value))
+onMounted(async () => await getData(params.value))
 
 const upload = async (): Promise<void> => {
   const data = new FormData()
   for (const item in form.value) item !== "cover" ? data.append(item, form.value[item]) : data.append('cover', cover.value[0]?.raw)
   try {
-    await axios.post(`${apiUrl}/updates/`, data, {headers: {'content-type': 'multipart/form-data'}})
+    await axios.post(`${apiUrl}/updates/create`, data)
     ElMessage({
       message: '添加动态成功',
       type: 'success'
     })
-    await getSearch(searchValue.value, num.value)
+    await getData(params.value)
   } catch (e) {
     ElMessage({
       message: '添加动态失败',
@@ -125,19 +147,27 @@ const upload = async (): Promise<void> => {
   }
 }
 
-const getSearch = async (str: string, num: number = 1): Promise<void> => {
-  const [countRes, dataRes] = await Promise.all([
-    axios.get(`http://localhost:3000/updates/searchPageNum?search=${str}`),
-    axios.get(`http://localhost:3000/updates/search/${num}?search=${str}`),
-  ])
-  pageNum.value = countRes.data.count
-  tableData.value = deepClone(dataRes.data)
-  tableNormalData = deepClone(dataRes.data)
+const edit = (_: MouseEvent, id: string) => {
+  store.setUpdateId(id)
+  router.push(`/edit`)
 }
 
-const debouncedHandleSearch: (newVal: string) => void = debounce(async (newVal: string) => await getSearch(newVal), 500);
+const getData = async (params: Record<string, any>): Promise<void> => {
+  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}/updates/pages`, {params})
+  pageTotal.value = _pageTotal
+  tableData.value = deepClone(data)
+  tableNormalData = deepClone(data)
+}
 
-watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
+const debouncedHandleSearch: (newVal: Params) => void = debounce(async (_: Params): Promise<void> => {
+  await getData(params.value)
+}, 500);
+
+watch(params, (newVal: Params) => debouncedHandleSearch(newVal), {deep: true})
+watch(search, (newVal: string) => {
+  params.value.title_regex = `/${newVal}/`
+  params.value.content_regex = `/${newVal}/`
+})
 </script>
 
 <template>
@@ -179,7 +209,7 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
   </ElDialog>
   <content :title="`${name}管理`">
     <template #btn-area>
-      <ElInput :placeholder="`搜索${name}...`" v-model="searchValue" style="margin-right: 25px; width: 230px"
+      <ElInput :placeholder="`搜索${name}...`" v-model="search" style="margin-right: 25px; width: 230px"
                :suffix-icon="Search"/>
       <ElButton @click="state = true" type="primary">添加{{ name }}</ElButton>
     </template>
@@ -190,12 +220,12 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
             {{ scope.row.title }}
           </template>
         </ElTableColumn>
-        <ElTableColumn align="center" show-overflow-tooltip prop="Title" label="动态作者">
+        <ElTableColumn align="center" show-overflow-tooltip prop="Author" label="动态作者">
           <template #default="scope">
             {{ scope.row.author }}
           </template>
         </ElTableColumn>
-        <ElTableColumn align="center" show-overflow-tooltip prop="Title" label="动态内容">
+        <ElTableColumn align="center" show-overflow-tooltip prop="Ellipsis" label="动态内容">
           <template #default="scope">
             {{ scope.row.ellipsis }}
           </template>
@@ -207,13 +237,13 @@ watch(searchValue, (newVal: string) => debouncedHandleSearch(newVal))
         </ElTableColumn>
         <ElTableColumn align="center" prop="Operations" label="操作">
           <template #default="scope">
-            <ElButton size="small" type="primary" @click="router.push(`/edit/${scope.row._id}`)">编辑</ElButton>
+            <ElButton size="small" type="primary" @click="edit($event, scope.row._id)">编辑</ElButton>
             <ElButton size="small" type="danger" @click="handleDelete(scope.row._id)">删除</ElButton>
           </template>
         </ElTableColumn>
       </ElTable>
       <ElPagination :hide-on-single-page="true" @current-change="currentChange" size="small" background
-                    layout="prev, pager, next" :total="total * pageNum"/>
+                    layout="prev, pager, next" :total="limit * pageTotal"/>
     </template>
   </content>
 </template>

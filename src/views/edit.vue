@@ -5,17 +5,20 @@ import {apiUrl} from "@/config"
 import {deepClone} from "@/utils";
 import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog} from "element-plus";
 import {useRoute, useRouter} from 'vue-router';
+import {storeToRefs} from "pinia";
 import axios from "axios";
+import defaultStore from "@/store"
 import '@wangeditor/editor/dist/css/style.css'
 import type {UploadFile} from "element-plus";
 import type {Ref, PropType} from 'vue'
 import type {IAbridgeUpdatesView, IAbridgeUpdatesContent} from "@/types"
 import type {IEditorConfig, IToolbarConfig, IDomEditor} from '@wangeditor/editor'
 
+const store = defaultStore()
 const route = useRoute();
 const router = useRouter();
 
-const id: Ref<string | null> = ref(route.params.id as string)
+const {updateId} = storeToRefs(store)
 
 const editorRef = shallowRef(null)
 
@@ -47,9 +50,8 @@ const editorConfig: Partial<IEditorConfig> = {
 
 const getData = async (): Promise<void> => {
   try {
-    const _id = id.value
-    const [view, content] = await Promise.all([axios.get(`${apiUrl}/updates/view/id/${_id}`), axios.get(`${apiUrl}/updates/content/id/${_id}`)])
-    form.value = {...view.data[0], ...content.data[0]}
+    const data = await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
+    form.value = data.data[0]
     const cover_ = form.value.cover
     cover.value = [{
       name: getImageName(cover_),

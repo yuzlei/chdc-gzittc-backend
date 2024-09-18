@@ -29,7 +29,7 @@ const routes: Readonly<RouteRecordRaw[]> = [{
         }],
     }],
 }, {
-    path: '/edit/:id',
+    path: '/edit',
     name: "edit",
     component: () => import("@/views/edit.vue"),
 }, {
