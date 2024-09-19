@@ -38,6 +38,7 @@ type IAbridgeUpdatesViewList = Array<IAbridgeUpdatesView>
 interface IAbridgeUpdatesContent {
     _id?: string,
     content: string,
+    content_text: string
 }
 
 export {

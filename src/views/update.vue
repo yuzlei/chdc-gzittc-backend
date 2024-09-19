@@ -15,7 +15,7 @@ import {
 } from "element-plus"
 import {storeToRefs} from "pinia";
 import {Close, Search} from "@element-plus/icons-vue";
-import {barData, apiUrl} from "@/config"
+import {apiUrl} from "@/config"
 import {deepClone, formatTime, debounce} from "@/utils"
 import defaultStore from "@/store"
 import content from "@/components/content.vue"
@@ -28,8 +28,6 @@ import type {IAbridgeUpdatesViewList, IAbridgeUpdatesView} from "@/types"
 const store = defaultStore()
 
 const {limit} = storeToRefs(store)
-
-const [{name}] = barData
 
 const imageRef: Ref<HTMLImageElement | null> = ref(null)
 
@@ -53,7 +51,8 @@ interface Params {
   sortName: string
   limit: number,
   title_regex: string,
-  content_regex: string
+  content_text_regex: string,
+  author_regex: string
 }
 
 const formData: IAbridgeUpdatesView = {
@@ -70,7 +69,8 @@ const params: Ref<Params> = ref({
   sortName: "createAt",
   limit: limit.value,
   title_regex: "//",
-  content_regex: "//"
+  content_text_regex: "//",
+  author_regex: "//",
 })
 
 let tableNormalData: IAbridgeUpdatesViewList | null = null
@@ -169,8 +169,10 @@ const handleImageError = (file: UploadFile): void => {
   let retries = 0;
   const retryLoad = () => {
     retries++;
-    if (retries <= maxRetries) {
-      setTimeout(() => nextTick(() => imageRef.value.src = coverSrc.value), 1000 * retries);
+    if (retries <= maxRetries && imageRef.value) {
+      setTimeout(() => nextTick(() => {
+        if(imageRef.value) imageRef.value.src = coverSrc.value
+      }), 1000 * retries);
     } else {
       file.url = 'https://via.placeholder.com/150';
     }
@@ -189,10 +191,17 @@ const debouncedHandleSearch: (newVal: Params) => void = debounce(async (_: Param
   await getData(params.value)
 }, 500);
 
+const keywords = (str: string): string | void => {
+  if(str){
+    return str.replaceAll(search.value, `<span style="color: red">${search.value}</span>`)
+  }
+}
+
 watch(params, (newVal: Params) => debouncedHandleSearch(newVal), {deep: true})
 watch(search, (newVal: string) => {
   params.value.title_regex = `/${newVal}/`
-  params.value.content_regex = `/${newVal}/`
+  params.value.content_text_regex = `/${newVal}/`
+  params.value.author_regex = `/${newVal}/`
 })
 </script>
 
@@ -240,27 +249,27 @@ watch(search, (newVal: string) => {
       </div>
     </template>
   </ElDialog>
-  <content :title="`${name}管理`">
+  <content title="动态管理">
     <template #btn-area>
-      <ElInput :placeholder="`搜索${name}...`" v-model="search" style="margin-right: 25px; width: 230px"
+      <ElInput :placeholder="`搜索标题、作者、内容...`" v-model="search" style="margin-right: 25px; width: 250px"
                :suffix-icon="Search"/>
-      <ElButton @click="state = true" type="primary">添加{{ name }}</ElButton>
+      <ElButton @click="state = true" type="primary">添加动态</ElButton>
     </template>
     <template #content>
       <ElTable @sort-change="handleSortChange" :table-layout="'fixed'" :data="tableData">
         <ElTableColumn align="center" show-overflow-tooltip prop="Title" label="动态标题">
           <template #default="scope">
-            {{ scope.row.title }}
+            <p v-html="keywords(scope.row.title)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Author" label="动态作者">
           <template #default="scope">
-            {{ scope.row.author }}
+            <p v-html="keywords(scope.row.author)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Ellipsis" label="动态内容">
           <template #default="scope">
-            {{ scope.row.ellipsis }}
+            <p v-html="keywords(scope.row.ellipsis)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Date" sortable label="更新日期">
