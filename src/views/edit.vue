@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {onBeforeUnmount, ref, shallowRef, onMounted} from 'vue'
+import {onBeforeUnmount, ref, shallowRef, onMounted, nextTick, computed} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 import {apiUrl} from "@/config"
 import {deepClone} from "@/utils";
-import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog} from "element-plus";
-import {useRoute, useRouter} from 'vue-router';
+import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog, ElIcon} from "element-plus";
+import {useRouter} from 'vue-router';
 import {storeToRefs} from "pinia";
 import axios from "axios";
 import defaultStore from "@/store"
@@ -13,12 +13,16 @@ import type {UploadFile} from "element-plus";
 import type {Ref, PropType} from 'vue'
 import type {IAbridgeUpdatesView, IAbridgeUpdatesContent} from "@/types"
 import type {IEditorConfig, IToolbarConfig, IDomEditor} from '@wangeditor/editor'
+import {Close} from "@element-plus/icons-vue";
 
 const store = defaultStore()
-const route = useRoute();
 const router = useRouter();
 
 const {updateId} = storeToRefs(store)
+
+const imageRef: Ref<HTMLImageElement | null> = ref(null)
+
+const coverSrc = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {imgSrc: string})?.imgSrc)
 
 const editorRef = shallowRef(null)
 
@@ -28,7 +32,7 @@ const formData: IAbridgeUpdatesView & IAbridgeUpdatesContent = {
   title: "",
   ellipsis: "",
   author: "",
-  cover: '',
+  cover: "",
   content: "",
 }
 
@@ -41,16 +45,20 @@ const toolbarConfig: Partial<IToolbarConfig> = {
 const editorConfig: Partial<IEditorConfig> = {
   MENU_CONF: {
     'uploadImage': {
-      fieldName: 'image',
-      server: `${apiUrl}/updates/image`,
+      fieldName: 'file',
+      server: `${apiUrl}/updates/upload`,
       allowedFileTypes: ['image/png', 'image/jpeg'],
+      customInsert(res: any, insertFn: (url: string, alt: string, href: string) => void) {
+        const {imgSrc} = res as {imgSrc: string}
+        insertFn(imgSrc, "", "")
+      },
     }
   }
 }
 
 const getData = async (): Promise<void> => {
   try {
-    const data = await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
+    const data =  await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
     form.value = data.data[0]
     const cover_ = form.value.cover
     cover.value = [{
@@ -90,16 +98,8 @@ const back = (): void => {
 
 const saveData = async (): Promise<void> => {
   try {
-    const data = new FormData()
-    for (const item in form.value) {
-      if (item !== "cover") {
-        data.append(item, form.value[item])
-      } else {
-        const {raw, url} = cover.value[0]
-        !raw ? data.append('cover', await saveImage(url)) : data.append('cover', raw)
-      }
-    }
-    await axios.put(`${apiUrl}/updates`, data)
+    form.value.cover = coverSrc.value
+    await axios.put(`${apiUrl}/updates/${updateId.value}`, form.value)
     ElMessage({
       message: '保存成功',
       type: 'success'
@@ -112,18 +112,21 @@ const saveData = async (): Promise<void> => {
   }
 }
 
-const saveImage = async (url: string): Promise<File> => {
-  try {
-    const res = await axios.get(url, {responseType: 'blob'});
-    const blob = await res.data;
-    return new File([blob], getImageName(url), {type: blob.type});
-  } catch (e) {
-    ElMessage({
-      message: '保存失败',
-      type: 'error'
-    })
-  }
+const handleRemove = (file: UploadFile): void => {
+  const index = cover.value.indexOf(file);
+  if (index > -1) cover.value.splice(index, 1);
 }
+
+const handleImageError = (file: UploadFile): void => {
+  const maxRetries = 3;
+  let retries = 0;
+  const retryLoad = () => {
+    retries++;
+    retries <= maxRetries ? setTimeout(() => nextTick(() => imageRef.value.src = coverSrc.value), 1000 * retries) : file.url = 'https://via.placeholder.com/150'
+  };
+  retryLoad();
+}
+
 </script>
 
 <template>
@@ -146,9 +149,19 @@ const saveImage = async (url: string): Promise<File> => {
           <ElInput v-model="form.author"/>
         </ElFormItem>
         <ElFormItem label="动态封面">
-          <ElUpload accept=".jpg, .png" :auto-upload="false" v-model:file-list="cover" :limit="1">
+          <ElUpload :action="`${apiUrl}/updates/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
             <template #trigger>
-              <ElButton :disabled="form.cover.length > 0" type="primary">选择文件</ElButton>
+              <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
+            </template>
+            <template #file="{file}">
+              <div class="file">
+                <img @error="handleImageError(file)" ref="imageRef" :src="coverSrc" alt="?">
+                <span @click="handleRemove(file)">
+                <ElIcon>
+                  <Close/>
+                </ElIcon>
+              </span>
+              </div>
             </template>
           </ElUpload>
         </ElFormItem>

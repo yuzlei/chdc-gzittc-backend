@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, watch} from "vue"
+import {ref, onMounted, watch, nextTick, computed} from "vue"
 import {ElMessage} from 'element-plus'
 import {
   ElButton,
@@ -10,10 +10,11 @@ import {
   ElDialog,
   ElForm,
   ElFormItem,
-  ElUpload
+  ElUpload,
+  ElIcon
 } from "element-plus"
 import {storeToRefs} from "pinia";
-import {Search} from "@element-plus/icons-vue";
+import {Close, Search} from "@element-plus/icons-vue";
 import {barData, apiUrl} from "@/config"
 import {deepClone, formatTime, debounce} from "@/utils"
 import defaultStore from "@/store"
@@ -30,15 +31,11 @@ const {limit} = storeToRefs(store)
 
 const [{name}] = barData
 
-const formData: IAbridgeUpdatesView = {
-  title: '',
-  author: '',
-  cover: '',
-}
+const imageRef: Ref<HTMLImageElement | null> = ref(null)
 
 const cover: Ref<Array<UploadFile>> = ref([])
 
-const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
+const coverSrc = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {imgSrc: string})?.imgSrc)
 
 const deleteId: Ref<Array<string>> = ref([])
 
@@ -48,7 +45,9 @@ const deleteState: Ref<boolean> = ref(false)
 
 const pageTotal: Ref<number | null> = ref(null)
 
-interface Params{
+const search: Ref<string> = ref("")
+
+interface Params {
   page: number
   sort: string | null
   sortName: string
@@ -57,7 +56,13 @@ interface Params{
   content_regex: string
 }
 
-const search: Ref<string> = ref("")
+const formData: IAbridgeUpdatesView = {
+  title: '',
+  author: '',
+  cover: '',
+}
+
+const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
 
 const params: Ref<Params> = ref({
   page: 1,
@@ -97,7 +102,8 @@ const handleDelete = (id: string): void => {
 const deleteUpdate = async (): Promise<void> => {
   try {
     await axios.delete(`${apiUrl}/updates/delete/`, {
-      params: {ids: deleteId.value.join(",")}})
+      params: {ids: deleteId.value.join(",")}
+    })
     ElMessage({
       message: '删除动态成功',
       type: 'success'
@@ -127,10 +133,9 @@ const clearForm = (): void => {
 onMounted(async () => await getData(params.value))
 
 const upload = async (): Promise<void> => {
-  const data = new FormData()
-  for (const item in form.value) item !== "cover" ? data.append(item, form.value[item]) : data.append('cover', cover.value[0]?.raw)
   try {
-    await axios.post(`${apiUrl}/updates/create`, data)
+    form.value.cover = coverSrc.value
+    await axios.post(`${apiUrl}/updates/create`, form.value)
     ElMessage({
       message: '添加动态成功',
       type: 'success'
@@ -147,9 +152,30 @@ const upload = async (): Promise<void> => {
   }
 }
 
-const edit = (_: MouseEvent, id: string) => {
+const edit = (id: string): void => {
   store.setUpdateId(id)
   router.push(`/edit`)
+}
+
+const handleRemove = (file: UploadFile): void => {
+  const index = cover.value.indexOf(file);
+  if (index > -1) {
+    cover.value.splice(index, 1);
+  }
+}
+
+const handleImageError = (file: UploadFile): void => {
+  const maxRetries = 3;
+  let retries = 0;
+  const retryLoad = () => {
+    retries++;
+    if (retries <= maxRetries) {
+      setTimeout(() => nextTick(() => imageRef.value.src = coverSrc.value), 1000 * retries);
+    } else {
+      file.url = 'https://via.placeholder.com/150';
+    }
+  };
+  retryLoad();
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
@@ -190,12 +216,19 @@ watch(search, (newVal: string) => {
         <ElInput v-model="form.author"/>
       </ElFormItem>
       <ElFormItem label="动态封面">
-        <ElUpload action="#" accept=".jpg, .png" :auto-upload="false" v-model:file-list="cover" :limit="1">
+        <ElUpload :action="`${apiUrl}/updates/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
           <template #trigger>
             <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
           </template>
           <template #file="{file}">
-            <img :src="file.url" alt="?">
+            <div class="file">
+              <img @error="handleImageError(file)" ref="imageRef" :src="coverSrc" alt="?">
+              <span @click="handleRemove(file)">
+                <ElIcon>
+                  <Close/>
+                </ElIcon>
+              </span>
+            </div>
           </template>
         </ElUpload>
       </ElFormItem>
@@ -237,7 +270,7 @@ watch(search, (newVal: string) => {
         </ElTableColumn>
         <ElTableColumn align="center" prop="Operations" label="操作">
           <template #default="scope">
-            <ElButton size="small" type="primary" @click="edit($event, scope.row._id)">编辑</ElButton>
+            <ElButton size="small" type="primary" @click="edit(scope.row._id)">编辑</ElButton>
             <ElButton size="small" type="danger" @click="handleDelete(scope.row._id)">删除</ElButton>
           </template>
         </ElTableColumn>
