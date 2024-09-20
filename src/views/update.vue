@@ -48,8 +48,6 @@ const search: Ref<string> = ref("")
 interface Params {
   page: number
   sort: string | null
-  sortName: string
-  limit: number,
   title_regex: string,
   content_text_regex: string,
   author_regex: string
@@ -66,8 +64,6 @@ const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
 const params: Ref<Params> = ref({
   page: 1,
   sort: null,
-  sortName: "createAt",
-  limit: limit.value,
   title_regex: "//",
   content_text_regex: "//",
   author_regex: "//",
@@ -164,7 +160,7 @@ const handleRemove = (file: UploadFile): void => {
   }
 }
 
-const handleImageError = (file: UploadFile): void => {
+const handleImageError = (_: UploadFile): void => {
   const maxRetries = 3;
   let retries = 0;
   const retryLoad = () => {
@@ -173,15 +169,13 @@ const handleImageError = (file: UploadFile): void => {
       setTimeout(() => nextTick(() => {
         if(imageRef.value) imageRef.value.src = coverSrc.value
       }), 1000 * retries);
-    } else {
-      file.url = 'https://via.placeholder.com/150';
     }
   };
   retryLoad();
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
-  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}/updates/pages`, {params})
+  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}/updates/pages_condition`, {params})
   pageTotal.value = _pageTotal
   tableData.value = deepClone(data)
   tableNormalData = deepClone(data)
@@ -191,11 +185,7 @@ const debouncedHandleSearch: (newVal: Params) => void = debounce(async (_: Param
   await getData(params.value)
 }, 500);
 
-const keywords = (str: string): string | void => {
-  if(str){
-    return str.replaceAll(search.value, `<span style="color: red">${search.value}</span>`)
-  }
-}
+const keywords = (str: string): string => search.value === "" ? str : str.replaceAll(search.value, `<span style="color: red">${search.value}</span>`)
 
 watch(params, (newVal: Params) => debouncedHandleSearch(newVal), {deep: true})
 watch(search, (newVal: string) => {
@@ -285,7 +275,7 @@ watch(search, (newVal: string) => {
         </ElTableColumn>
       </ElTable>
       <ElPagination :hide-on-single-page="true" @current-change="currentChange" size="small" background
-                    layout="prev, pager, next" :total="limit * pageTotal"/>
+                    layout="prev, pager, next" :total="limit * pageTotal" :pager-count="5"/>
     </template>
   </content>
 </template>

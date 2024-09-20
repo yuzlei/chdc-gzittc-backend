@@ -102,7 +102,7 @@ const saveData = async (): Promise<void> => {
     form.value.cover = coverSrc.value
     const doc = new DOMParser().parseFromString(form.value.content, 'text/html')
     form.value.content_text = doc.body.textContent || doc.body.innerText
-    form.value.ellipsis = form.value.content_text.slice(0, 21);
+    form.value.ellipsis = form.value.content_text.slice(0, 50);
     await axios.put(`${apiUrl}/updates/${updateId.value}`, form.value)
     ElMessage({
       message: '保存成功',
