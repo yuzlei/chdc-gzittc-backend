@@ -2,7 +2,7 @@
 import {onBeforeUnmount, ref, shallowRef, onMounted, computed} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 import {apiUrl} from "@/config"
-import {deepClone, getImageName, imageRemove, imageError, imageBeforeUpload} from "@/utils";
+import {deepClone, getImageName, imageRemove, imageError, imageBeforeUpload, completeImagePath} from "@/utils";
 import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog, ElIcon} from "element-plus";
 import {useRouter} from 'vue-router';
 import {storeToRefs} from "pinia";
@@ -57,10 +57,16 @@ const editorConfig: Partial<IEditorConfig> = {
   }
 }
 
+const replaceContent = (str: string, reversal: boolean = true): string => reversal ? str.replace(/src=["'](\/.+\.(png|jpg|jpeg)\/?)["']/g, ((_, url: string) => `src="${apiUrl}${url}"`)) : str.replace(/src=["'](\/.+\.(png|jpg|jpeg)\/?)["']/g, ((_, url: string) => `src="${url}"`))
+
 const getData = async (): Promise<void> => {
   try {
     const data = await axios.get(`${url}/search`, {params: {_id: updateId.value}})
-    form.value = data.data[0]
+    form.value = data.data.map((item: IAbridgeUpdatesView & IAbridgeUpdatesContent) => {
+      item.cover = completeImagePath(item.cover)
+      item.content = replaceContent(item.content)
+      return item
+    })[0]
     const cover_ = form.value.cover
     cover.value = [{
       name: getImageName(cover_),
@@ -85,11 +91,14 @@ const back = (): void => {
 
 const saveData = async (): Promise<void> => {
   try {
-    form.value.cover = coverSrc.value
     const doc = new DOMParser().parseFromString(form.value.content, 'text/html')
     form.value.content_text = doc.body.textContent || doc.body.innerText
     form.value.ellipsis = form.value.content_text.slice(0, 50);
-    await axios.put(`${url}/${updateId.value}`, form.value)
+    await axios.put(`${url}/${updateId.value}`, {
+      ...form.value,
+      cover: completeImagePath(coverSrc.value, false),
+      content: replaceContent(form.value.content, false)
+    })
     ElMessage({
       message: '保存成功',
       type: 'success'
@@ -131,7 +140,8 @@ onBeforeUnmount(() => {
           <ElInput v-model="form.author"/>
         </ElFormItem>
         <ElFormItem label="动态封面">
-          <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
+          <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png"
+                    v-model:file-list="cover" :limit="1">
             <template #trigger>
               <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
             </template>

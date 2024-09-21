@@ -20,7 +20,7 @@ import {
   setId,
   imageRemove,
   imageError,
-  imageBeforeUpload
+  imageBeforeUpload, completeImagePath
 } from "@/utils";
 import {computed, onMounted, ref, watch} from "vue";
 import {storeToRefs} from "pinia";
@@ -153,6 +153,12 @@ const handleSortChange = ({prop, order}): void => {
   }
 }
 
+const postData = (): IMember => ({
+  ...form.value,
+  status: (form.value.status as Array<string>).join("、"),
+  head: completeImagePath(imgSrc.value, false),
+})
+
 const currentChange = async (value: number): Promise<void> => {
   params.value.page = value
   await getData(params.value)
@@ -167,11 +173,7 @@ const handleCancel = () => {
 
 const upload = async (): Promise<void> => {
   try {
-    form.value.head = imgSrc.value
-    await axios.post(`${url}/create`, {
-      ...form.value,
-      status: (form.value.status as Array<string>).join("、")
-    })
+    await axios.post(`${url}/create`, postData())
     ElMessage({
       message: '添加成员成功',
       type: 'success'
@@ -192,7 +194,8 @@ const handleEdit = async (): Promise<void> => {
     form.value.head = imgSrc.value
     await axios.put(`${url}/${editId.value}`, {
       ...form.value,
-      status: (form.value.status as Array<string>).join("、")
+      status: (form.value.status as Array<string>).join("、"),
+      head: completeImagePath(imgSrc.value, false),
     })
     ElMessage({
       message: '修改成员成功',
@@ -214,6 +217,7 @@ const searchData = async (): Promise<void> => {
     let data = await axios.get(`${url}/search`, {params: {_id: editId.value}})
     form.value = data.data.map((item: IMember) => {
       item.status = (item.status as string).split("、")
+      item.head = completeImagePath(item.head)
       return item
     })[0]
     const head_ = form.value.head
@@ -236,9 +240,7 @@ watch(search, (newVal: string) => {
   params.value.name_regex = `/${newVal}/`
   params.value.status_regex = `/${newVal}/`
 })
-watch(editState, async (newVal: boolean) => {
-  if (newVal) await searchData()
-})
+watch(editState, async (newVal: boolean) => newVal ? await searchData() : null)
 
 onMounted(async () => await getData(params.value))
 </script>
@@ -275,7 +277,8 @@ onMounted(async () => await getData(params.value))
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="成员头像">
-        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
+        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png"
+                  v-model:file-list="img" :limit="1">
           <template #trigger>
             <ElButton :disabled="img.length > 0" type="primary">选择文件</ElButton>
           </template>

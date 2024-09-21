@@ -16,7 +16,16 @@ import {
 import {storeToRefs} from "pinia";
 import {Close, Search} from "@element-plus/icons-vue";
 import {apiUrl} from "@/config"
-import {deepClone, formatTime, debounce, keywords, imageRemove, imageError, imageBeforeUpload} from "@/utils"
+import {
+  deepClone,
+  formatTime,
+  debounce,
+  keywords,
+  imageRemove,
+  imageError,
+  imageBeforeUpload,
+  completeImagePath
+} from "@/utils"
 import axios from "axios"
 import router from "@/router";
 import defaultStore from "@/store"
@@ -121,7 +130,7 @@ const handleCancel = () => {
 const upload = async (): Promise<void> => {
   try {
     form.value.cover = coverSrc.value
-    await axios.post(`${url}/create`, form.value)
+    await axios.post(`${url}/create`, {...form.value, cover: completeImagePath(coverSrc.value, false)})
     ElMessage({
       message: '添加动态成功',
       type: 'success'
@@ -181,7 +190,8 @@ onMounted(async () => await getData(params.value))
         <ElInput v-model="form.author"/>
       </ElFormItem>
       <ElFormItem label="动态封面">
-        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
+        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png"
+                  v-model:file-list="cover" :limit="1">
           <template #trigger>
             <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
           </template>

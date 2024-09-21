@@ -9,7 +9,17 @@ import {
   ElUpload,
 } from "element-plus"
 import {Close, Search} from "@element-plus/icons-vue";
-import {debounce, deepClone, formatTime, keywords, getImageName, imageRemove, imageError, imageBeforeUpload} from "@/utils";
+import {
+  debounce,
+  deepClone,
+  formatTime,
+  keywords,
+  getImageName,
+  imageRemove,
+  imageError,
+  imageBeforeUpload,
+  completeImagePath
+} from "@/utils";
 import {computed, onMounted, ref, watch} from "vue";
 import {storeToRefs} from "pinia";
 import {apiUrl} from "@/config";
@@ -89,7 +99,8 @@ const deleteUpdate = async (): Promise<void> => {
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
-  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${url}/pages_condition`, {params})
+  let {data: {data, pageTotal: _pageTotal}} = await axios.get(`${url}/pages_condition`, {params})
+  data.forEach((item: IAchieve) => item.imgSrc = completeImagePath(item.imgSrc))
   pageTotal.value = _pageTotal
   tableData.value = deepClone(data)
   tableNormalData = deepClone(data)
@@ -129,7 +140,7 @@ const handleCancel = () => {
 const upload = async (): Promise<void> => {
   try {
     form.value.imgSrc = imgSrc.value
-    await axios.post(`${url}/create`, form.value)
+    await axios.post(`${url}/create`, {...form.value, imgSrc: completeImagePath(imgSrc.value, false)})
     ElMessage({
       message: '添加成就成功',
       type: 'success'
@@ -148,7 +159,7 @@ const upload = async (): Promise<void> => {
 const handleEdit = async (): Promise<void> => {
   try {
     form.value.imgSrc = imgSrc.value
-    await axios.put(`${url}/${updateId.value}`, form.value)
+    await axios.put(`${url}/${updateId.value}`, {...form.value, imgSrc: completeImagePath(imgSrc.value, false)})
     ElMessage({
       message: '修改成就成功',
       type: 'success'
@@ -167,6 +178,7 @@ const handleEdit = async (): Promise<void> => {
 const getIdData = async (): Promise<void> => {
   try {
     const data = await axios.get(`${url}/search`, {params: {_id: updateId.value}})
+    data.data.forEach((item: IAchieve) => item.imgSrc = completeImagePath(item.imgSrc))
     form.value = data.data[0]
     const imgSrc_ = form.value.imgSrc
     img.value = [{
@@ -185,9 +197,7 @@ const getIdData = async (): Promise<void> => {
 
 watch(params, (newVal: IParams) => debouncedHandleSearch(newVal), {deep: true})
 watch(search, (newVal: string) => params.value.name_regex = `/${newVal}/`)
-watch(editState, async (newVal: boolean) => {
-  if (newVal) await getIdData()
-})
+watch(editState, async (newVal: boolean) => newVal ? await getIdData() : null)
 
 onMounted(async () => await getData(params.value))
 </script>
@@ -209,7 +219,8 @@ onMounted(async () => await getData(params.value))
         <ElInput v-model="form.name"/>
       </ElFormItem>
       <ElFormItem label="成就图标">
-        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
+        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png"
+                  v-model:file-list="img" :limit="1">
           <template #trigger>
             <ElButton :disabled="img.length > 0" type="primary">选择文件</ElButton>
           </template>

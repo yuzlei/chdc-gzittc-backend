@@ -1,6 +1,7 @@
 import {nextTick} from "vue";
 import {ElMessage} from "element-plus";
 import type {UploadRawFile, UploadFile} from "element-plus";
+import {apiUrl} from "@/config";
 
 const deepClone = <T>(data: T): T => {
     if (typeof data !== 'object' || data === null) return data;
@@ -47,7 +48,7 @@ const imageError = (imgRef: HTMLImageElement, imgSrc: string): void => {
     const maxRetries: number = 3;
     let retries: number = 0;
     retries++;
-    retries <= maxRetries && imgRef ? setTimeout(() => nextTick(() => imgRef ? imgRef.src = imgSrc : null), 1000 * retries) : null
+    retries <= maxRetries && imgRef ? setTimeout(() => nextTick((): string => imgRef ? imgRef.src = imgSrc : null), 1000 * retries) : null
 }
 
 const imageBeforeUpload = (file: UploadRawFile): boolean => {
@@ -61,6 +62,8 @@ const imageBeforeUpload = (file: UploadRawFile): boolean => {
     return isImg;
 }
 
+const completeImagePath = (url: string, reversal: boolean = true): string => reversal ? `${apiUrl}${url}` : url.replace(`${apiUrl}`, '')
+
 export {
     deepClone,
     debounce,
@@ -70,5 +73,6 @@ export {
     getImageName,
     imageRemove,
     imageError,
-    imageBeforeUpload
+    imageBeforeUpload,
+    completeImagePath
 }
