@@ -35,7 +35,7 @@ const editState: Ref<boolean> = ref(false)
 const deleteState: Ref<boolean> = ref(false)
 const pageTotal: Ref<number | null> = ref(null)
 const search: Ref<string> = ref("")
-const url = "/achieves"
+const url = `${apiUrl}/achieves`
 let tableNormalData: IAchieveList | null = null
 let tableData: Ref<IAchieveList> | null = ref(null)
 
@@ -71,7 +71,7 @@ const edit = (id: string): void => {
 
 const deleteUpdate = async (): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}${url}/delete/`, {params: {ids: deleteId.value.join(",")}})
+    await axios.delete(`${url}/delete/`, {params: {ids: deleteId.value.join(",")}})
     ElMessage({
       message: '删除成就成功',
       type: 'success'
@@ -89,7 +89,7 @@ const deleteUpdate = async (): Promise<void> => {
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
-  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}${url}/pages_condition`, {params})
+  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${url}/pages_condition`, {params})
   pageTotal.value = _pageTotal
   tableData.value = deepClone(data)
   tableNormalData = deepClone(data)
@@ -129,7 +129,7 @@ const handleCancel = () => {
 const upload = async (): Promise<void> => {
   try {
     form.value.imgSrc = imgSrc.value
-    await axios.post(`${apiUrl}${url}/create`, form.value)
+    await axios.post(`${url}/create`, form.value)
     ElMessage({
       message: '添加成就成功',
       type: 'success'
@@ -148,7 +148,7 @@ const upload = async (): Promise<void> => {
 const handleEdit = async (): Promise<void> => {
   try {
     form.value.imgSrc = imgSrc.value
-    await axios.put(`${apiUrl}${url}/${updateId.value}`, form.value)
+    await axios.put(`${url}/${updateId.value}`, form.value)
     ElMessage({
       message: '修改成就成功',
       type: 'success'
@@ -166,7 +166,7 @@ const handleEdit = async (): Promise<void> => {
 
 const getIdData = async (): Promise<void> => {
   try {
-    const data = await axios.get(`${apiUrl}${url}/search`, {params: {_id: updateId.value}})
+    const data = await axios.get(`${url}/search`, {params: {_id: updateId.value}})
     form.value = data.data[0]
     const imgSrc_ = form.value.imgSrc
     img.value = [{
@@ -209,7 +209,7 @@ onMounted(async () => await getData(params.value))
         <ElInput v-model="form.name"/>
       </ElFormItem>
       <ElFormItem label="成就图标">
-        <ElUpload :action="`${apiUrl}/achieves/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
+        <ElUpload :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
           <template #trigger>
             <ElButton :disabled="img.length > 0" type="primary">选择文件</ElButton>
           </template>

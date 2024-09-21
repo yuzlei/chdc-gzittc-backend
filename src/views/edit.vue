@@ -26,7 +26,7 @@ const coverSrc: ComputedRef<string> = computed(() => cover.value?.[0]?.url || (c
 const editorRef = shallowRef(null)
 const cover: Ref<Array<UploadFile>> = ref([])
 const backState: Ref<boolean> = ref(false);
-const url: string = "/updates"
+const url: string = `${apiUrl}/updates`
 
 const formData: IAbridgeUpdatesView & IAbridgeUpdatesContent = {
   title: "",
@@ -47,7 +47,7 @@ const editorConfig: Partial<IEditorConfig> = {
   MENU_CONF: {
     'uploadImage': {
       fieldName: 'file',
-      server: `${apiUrl}/updates/upload`,
+      server: `${url}/upload`,
       allowedFileTypes: ['image/png', 'image/jpeg'],
       customInsert(res: any, insertFn: (url: string, alt: string, href: string) => void) {
         const {imgSrc} = res as { imgSrc: string }
@@ -59,7 +59,7 @@ const editorConfig: Partial<IEditorConfig> = {
 
 const getData = async (): Promise<void> => {
   try {
-    const data = await axios.get(`${apiUrl}${url}/search`, {params: {_id: updateId.value}})
+    const data = await axios.get(`${url}/search`, {params: {_id: updateId.value}})
     form.value = data.data[0]
     const cover_ = form.value.cover
     cover.value = [{
@@ -89,7 +89,7 @@ const saveData = async (): Promise<void> => {
     const doc = new DOMParser().parseFromString(form.value.content, 'text/html')
     form.value.content_text = doc.body.textContent || doc.body.innerText
     form.value.ellipsis = form.value.content_text.slice(0, 50);
-    await axios.put(`${apiUrl}${url}/${updateId.value}`, form.value)
+    await axios.put(`${url}/${updateId.value}`, form.value)
     ElMessage({
       message: '保存成功',
       type: 'success'
@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
           <ElInput v-model="form.author"/>
         </ElFormItem>
         <ElFormItem label="动态封面">
-          <ElUpload :action="`${apiUrl}/updates/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
+          <ElUpload :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
             <template #trigger>
               <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
             </template>

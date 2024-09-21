@@ -38,7 +38,7 @@ const dialogState: Ref<boolean> = ref(false)
 const deleteState: Ref<boolean> = ref(false)
 const pageTotal: Ref<number | null> = ref(null)
 const search: Ref<string> = ref("")
-const url: string = "/updates"
+const url: string = `${apiUrl}/updates`
 let tableNormalData: IAbridgeUpdatesViewList | null = null
 let tableData: Ref<IAbridgeUpdatesViewList> | null = ref(null)
 
@@ -90,7 +90,7 @@ const handleDelete = (id: string): void => {
 
 const deleteUpdate = async (): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}${url}/delete/`, {params: {ids: deleteId.value.join(",")}})
+    await axios.delete(`${url}/delete/`, {params: {ids: deleteId.value.join(",")}})
     ElMessage({
       message: '删除动态成功',
       type: 'success'
@@ -121,7 +121,7 @@ const handleCancel = () => {
 const upload = async (): Promise<void> => {
   try {
     form.value.cover = coverSrc.value
-    await axios.post(`${apiUrl}${url}/create`, form.value)
+    await axios.post(`${url}/create`, form.value)
     ElMessage({
       message: '添加动态成功',
       type: 'success'
@@ -143,7 +143,7 @@ const goEdit = (id: string): void => {
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
-  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}${url}/pages_condition`, {params})
+  const {data: {data, pageTotal: _pageTotal}} = await axios.get(`${url}/pages_condition`, {params})
   pageTotal.value = _pageTotal
   tableData.value = deepClone(data)
   tableNormalData = deepClone(data)
@@ -181,7 +181,7 @@ onMounted(async () => await getData(params.value))
         <ElInput v-model="form.author"/>
       </ElFormItem>
       <ElFormItem label="动态封面">
-        <ElUpload :action="`${apiUrl}/updates/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
+        <ElUpload :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
           <template #trigger>
             <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
           </template>
