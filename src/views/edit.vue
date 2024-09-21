@@ -26,6 +26,7 @@ const coverSrc: ComputedRef<string> = computed(() => cover.value?.[0]?.url || (c
 const editorRef = shallowRef(null)
 const cover: Ref<Array<UploadFile>> = ref([])
 const backState: Ref<boolean> = ref(false);
+const url: string = "/updates"
 
 const formData: IAbridgeUpdatesView & IAbridgeUpdatesContent = {
   title: "",
@@ -58,7 +59,7 @@ const editorConfig: Partial<IEditorConfig> = {
 
 const getData = async (): Promise<void> => {
   try {
-    const data = await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
+    const data = await axios.get(`${apiUrl}${url}/search`, {params: {_id: updateId.value}})
     form.value = data.data[0]
     const cover_ = form.value.cover
     cover.value = [{
@@ -88,7 +89,7 @@ const saveData = async (): Promise<void> => {
     const doc = new DOMParser().parseFromString(form.value.content, 'text/html')
     form.value.content_text = doc.body.textContent || doc.body.innerText
     form.value.ellipsis = form.value.content_text.slice(0, 50);
-    await axios.put(`${apiUrl}/updates/${updateId.value}`, form.value)
+    await axios.put(`${apiUrl}${url}/${updateId.value}`, form.value)
     ElMessage({
       message: '保存成功',
       type: 'success'

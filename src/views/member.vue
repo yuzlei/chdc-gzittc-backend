@@ -37,6 +37,7 @@ const editState: Ref<boolean> = ref(false)
 const deleteState: Ref<boolean> = ref(false)
 const pageTotal: Ref<number | null> = ref(null)
 const search: Ref<string> = ref("")
+const url: string = "/members"
 let tableNormalData: IMemberList | null = null
 let tableData: Ref<IMemberList> | null = ref(null)
 
@@ -95,7 +96,7 @@ const edit = (id: string): void => {
 
 const deleteUpdate = async (): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}/members/delete/`, {params: {ids: deleteId.value.join(",")}})
+    await axios.delete(`${apiUrl}${url}/delete/`, {params: {ids: deleteId.value.join(",")}})
     ElMessage({
       message: '删除成员成功',
       type: 'success'
@@ -113,7 +114,7 @@ const deleteUpdate = async (): Promise<void> => {
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
-  let {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}/members/pages_condition`, {params})
+  let {data: {data, pageTotal: _pageTotal}} = await axios.get(`${apiUrl}${url}/pages_condition`, {params})
   pageTotal.value = _pageTotal
   data = data.map((item: IMember) => {
     item.status = (item.status as string).split("、")
@@ -157,7 +158,7 @@ const handleCancel = () => {
 const upload = async (): Promise<void> => {
   try {
     form.value.head = imgSrc.value
-    await axios.post(`${apiUrl}/members/create`, {
+    await axios.post(`${apiUrl}${url}/create`, {
       ...form.value,
       status: (form.value.status as Array<string>).join("、")
     })
@@ -179,7 +180,7 @@ const upload = async (): Promise<void> => {
 const handleEdit = async (): Promise<void> => {
   try {
     form.value.head = imgSrc.value
-    await axios.put(`${apiUrl}/members/${editId.value}`, {
+    await axios.put(`${apiUrl}${url}/${editId.value}`, {
       ...form.value,
       status: (form.value.status as Array<string>).join("、")
     })
@@ -200,7 +201,7 @@ const handleEdit = async (): Promise<void> => {
 
 const searchData = async (): Promise<void> => {
   try {
-    let data = await axios.get(`${apiUrl}/members/search`, {params: {_id: editId.value}})
+    let data = await axios.get(`${apiUrl}${url}/search`, {params: {_id: editId.value}})
     form.value = data.data.map((item: IMember) => {
       item.status = (item.status as string).split("、")
       return item
