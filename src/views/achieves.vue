@@ -9,7 +9,7 @@ import {
   ElUpload,
 } from "element-plus"
 import {Close, Search} from "@element-plus/icons-vue";
-import {debounce, deepClone, formatTime, keywords, getImageName, imageRemove, imageError} from "@/utils";
+import {debounce, deepClone, formatTime, keywords, getImageName, imageRemove, imageError, imageBeforeUpload} from "@/utils";
 import {computed, onMounted, ref, watch} from "vue";
 import {storeToRefs} from "pinia";
 import {apiUrl} from "@/config";
@@ -209,7 +209,7 @@ onMounted(async () => await getData(params.value))
         <ElInput v-model="form.name"/>
       </ElFormItem>
       <ElFormItem label="成就图标">
-        <ElUpload :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
+        <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="img" :limit="1">
           <template #trigger>
             <ElButton :disabled="img.length > 0" type="primary">选择文件</ElButton>
           </template>

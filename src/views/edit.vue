@@ -2,7 +2,7 @@
 import {onBeforeUnmount, ref, shallowRef, onMounted, computed} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 import {apiUrl} from "@/config"
-import {deepClone, getImageName, imageRemove, imageError} from "@/utils";
+import {deepClone, getImageName, imageRemove, imageError, imageBeforeUpload} from "@/utils";
 import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog, ElIcon} from "element-plus";
 import {useRouter} from 'vue-router';
 import {storeToRefs} from "pinia";
@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
           <ElInput v-model="form.author"/>
         </ElFormItem>
         <ElFormItem label="动态封面">
-          <ElUpload :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
+          <ElUpload :before-upload="imageBeforeUpload" :action="`${url}/upload`" accept=".jpg, .png" v-model:file-list="cover" :limit="1">
             <template #trigger>
               <ElButton :disabled="cover.length > 0" type="primary">选择文件</ElButton>
             </template>

@@ -1,5 +1,6 @@
 import {nextTick} from "vue";
-import type {UploadFile} from "element-plus";
+import {ElMessage} from "element-plus";
+import type {UploadRawFile, UploadFile} from "element-plus";
 
 const deepClone = <T>(data: T): T => {
     if (typeof data !== 'object' || data === null) return data;
@@ -49,6 +50,17 @@ const imageError = (imgRef: HTMLImageElement, imgSrc: string): void => {
     retries <= maxRetries && imgRef ? setTimeout(() => nextTick(() => imgRef ? imgRef.src = imgSrc : null), 1000 * retries) : null
 }
 
+const imageBeforeUpload = (file: UploadRawFile): boolean => {
+    const isImg: boolean = ['image/jpeg', 'image/png'].includes(file.type);
+    if (!isImg) {
+        ElMessage({
+            message: '只能上传 JPG 或 PNG 格式的图片',
+            type: 'error'
+        })
+    }
+    return isImg;
+}
+
 export {
     deepClone,
     debounce,
@@ -58,4 +70,5 @@ export {
     getImageName,
     imageRemove,
     imageError,
+    imageBeforeUpload
 }

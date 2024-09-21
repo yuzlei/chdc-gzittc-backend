@@ -1,7 +1,7 @@
 import {createRouter, createWebHistory} from "vue-router";
 import type {RouteRecordRaw} from "vue-router"
 
-const routes: Readonly<RouteRecordRaw[]> = [{
+const routes: Readonly<Array<RouteRecordRaw>> = [{
     path: "/",
     redirect: "/home",
     component: () => import("@/App.vue"),
@@ -22,20 +22,19 @@ const routes: Readonly<RouteRecordRaw[]> = [{
             path: "/home/achieves",
             name: "achieves",
             component: () => import("@/views/achieves.vue"),
-        }, {
-            path: '/home/404',
-            name: '404',
-            component: () => import("@/views/notfound.vue"),
         }],
     }],
+},{
+    path: '/404',
+    name: '404',
+    component: () => import("@/views/notfound.vue"),
 }, {
     path: '/edit',
     name: "edit",
     component: () => import("@/views/edit.vue"),
 }, {
     path: '/:catchAll(.*)',
-    name: "404",
-    redirect: '/home/404',
+    redirect: '/404',
 }]
 
 export default createRouter({
