@@ -2,14 +2,14 @@
 import {ElMenu, ElMenuItem, ElIcon} from "element-plus"
 import {IBarList} from "@/types";
 
-defineProps<{ bar: IBarList }>();
+defineProps<{ bar: IBarList, active: string }>();
 </script>
 
 <template>
   <div class="bar">
     <div class="bar-content">
       <img src="@/assets/images/logo.png" alt="?"/>
-      <ElMenu :default-active="bar[0].href" class="el-menu-vertical-demo" router>
+      <ElMenu :default-active="active" class="el-menu-vertical-demo" router>
         <ElMenuItem v-for="item in bar" :key="item._id" :index="item.href">
           <template #title>
             <ElIcon>

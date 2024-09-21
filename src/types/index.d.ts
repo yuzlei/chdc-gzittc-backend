@@ -11,7 +11,8 @@ interface IMember {
     _id?: string,
     name: string,
     head: string,
-    status: Array<number>,
+    status: Array<string> | string,
+    createdAt?: string,
 }
 
 type IMemberList = Array<IMember>
@@ -20,6 +21,7 @@ interface IAchieve {
     _id?: string,
     name: string,
     imgSrc: string
+    createdAt?: string,
 }
 
 type IAchieveList = Array<IAchieve>

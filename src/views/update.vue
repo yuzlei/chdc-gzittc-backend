@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, watch, nextTick, computed} from "vue"
+import {ref, onMounted, watch, computed} from "vue"
 import {ElMessage} from 'element-plus'
 import {
   ElButton,
@@ -16,36 +16,32 @@ import {
 import {storeToRefs} from "pinia";
 import {Close, Search} from "@element-plus/icons-vue";
 import {apiUrl} from "@/config"
-import {deepClone, formatTime, debounce} from "@/utils"
-import defaultStore from "@/store"
-import content from "@/components/content.vue"
+import {deepClone, formatTime, debounce, keywords, imageRemove, imageError} from "@/utils"
 import axios from "axios"
 import router from "@/router";
-import type {Ref} from "vue"
+import defaultStore from "@/store"
+import content from "@/components/content.vue"
+import type {Ref, ComputedRef} from "vue"
 import type {UploadFile} from "element-plus";
 import type {IAbridgeUpdatesViewList, IAbridgeUpdatesView} from "@/types"
 
 const store = defaultStore()
-
 const {limit} = storeToRefs(store)
 
 const imageRef: Ref<HTMLImageElement | null> = ref(null)
-
 const cover: Ref<Array<UploadFile>> = ref([])
-
-const coverSrc = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {imgSrc: string})?.imgSrc)
-
+const coverSrc: ComputedRef<string> = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {
+  imgSrc: string
+})?.imgSrc)
 const deleteId: Ref<Array<string>> = ref([])
-
-const state: Ref<boolean> = ref(false)
-
+const dialogState: Ref<boolean> = ref(false)
 const deleteState: Ref<boolean> = ref(false)
-
 const pageTotal: Ref<number | null> = ref(null)
-
 const search: Ref<string> = ref("")
+let tableNormalData: IAbridgeUpdatesViewList | null = null
+let tableData: Ref<IAbridgeUpdatesViewList> | null = ref(null)
 
-interface Params {
+interface IParams {
   page: number
   sort: string | null
   title_regex: string,
@@ -61,17 +57,13 @@ const formData: IAbridgeUpdatesView = {
 
 const form: Ref<IAbridgeUpdatesView> = ref(deepClone(formData))
 
-const params: Ref<Params> = ref({
+const params: Ref<IParams> = ref({
   page: 1,
   sort: null,
   title_regex: "//",
   content_text_regex: "//",
   author_regex: "//",
 })
-
-let tableNormalData: IAbridgeUpdatesViewList | null = null
-
-let tableData: Ref<IAbridgeUpdatesViewList> | null = ref(null)
 
 const handleSortChange = ({prop, order}): void => {
   if (prop === "Date") {
@@ -97,9 +89,7 @@ const handleDelete = (id: string): void => {
 
 const deleteUpdate = async (): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}/updates/delete/`, {
-      params: {ids: deleteId.value.join(",")}
-    })
+    await axios.delete(`${apiUrl}/updates/delete/`, {params: {ids: deleteId.value.join(",")}})
     ElMessage({
       message: '删除动态成功',
       type: 'success'
@@ -121,12 +111,11 @@ const currentChange = async (value: number): Promise<void> => {
   await getData(params.value)
 }
 
-const clearForm = (): void => {
+const handleCancel = () => {
+  dialogState.value = false
   form.value = deepClone(formData)
   cover.value = []
 }
-
-onMounted(async () => await getData(params.value))
 
 const upload = async (): Promise<void> => {
   try {
@@ -143,35 +132,13 @@ const upload = async (): Promise<void> => {
       type: 'error'
     })
   } finally {
-    state.value = false
-    clearForm()
+    handleCancel()
   }
 }
 
-const edit = (id: string): void => {
+const goEdit = (id: string): void => {
   store.setUpdateId(id)
   router.push(`/edit`)
-}
-
-const handleRemove = (file: UploadFile): void => {
-  const index = cover.value.indexOf(file);
-  if (index > -1) {
-    cover.value.splice(index, 1);
-  }
-}
-
-const handleImageError = (_: UploadFile): void => {
-  const maxRetries = 3;
-  let retries = 0;
-  const retryLoad = () => {
-    retries++;
-    if (retries <= maxRetries && imageRef.value) {
-      setTimeout(() => nextTick(() => {
-        if(imageRef.value) imageRef.value.src = coverSrc.value
-      }), 1000 * retries);
-    }
-  };
-  retryLoad();
 }
 
 const getData = async (params: Record<string, any>): Promise<void> => {
@@ -181,18 +148,16 @@ const getData = async (params: Record<string, any>): Promise<void> => {
   tableNormalData = deepClone(data)
 }
 
-const debouncedHandleSearch: (newVal: Params) => void = debounce(async (_: Params): Promise<void> => {
-  await getData(params.value)
-}, 500);
+const debouncedHandleSearch: (newVal: IParams) => void = debounce(async (): Promise<void> => await getData(params.value), 500);
 
-const keywords = (str: string): string => search.value === "" ? str : str.replaceAll(search.value, `<span style="color: red">${search.value}</span>`)
-
-watch(params, (newVal: Params) => debouncedHandleSearch(newVal), {deep: true})
+watch(params, (newVal: IParams) => debouncedHandleSearch(newVal), {deep: true})
 watch(search, (newVal: string) => {
   params.value.title_regex = `/${newVal}/`
   params.value.content_text_regex = `/${newVal}/`
   params.value.author_regex = `/${newVal}/`
 })
+
+onMounted(async () => await getData(params.value))
 </script>
 
 <template>
@@ -206,7 +171,7 @@ watch(search, (newVal: string) => {
     </template>
   </ElDialog>
   <ElDialog destroy-on-close class="dialog" :close-on-click-modal="false" :close-on-press-escape="false"
-            :show-close="false" title="添加动态" width="500" v-model="state">
+            :show-close="false" title="添加动态" width="500" v-model="dialogState">
     <ElForm style="max-width: 350px; margin-top: 10px; margin-left: 25px" :model="form">
       <ElFormItem label="动态标题">
         <ElInput v-model="form.title"/>
@@ -221,8 +186,8 @@ watch(search, (newVal: string) => {
           </template>
           <template #file="{file}">
             <div class="file">
-              <img @error="handleImageError(file)" ref="imageRef" :src="coverSrc" alt="?">
-              <span @click="handleRemove(file)">
+              <img @error="imageError(imageRef, coverSrc)" ref="imageRef" :src="coverSrc" alt="?">
+              <span @click="imageRemove(file, cover)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>
@@ -234,7 +199,7 @@ watch(search, (newVal: string) => {
     </ElForm>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="state = false">取消</el-button>
+        <el-button @click="handleCancel">取消</el-button>
         <el-button type="primary" @click="upload">确定</el-button>
       </div>
     </template>
@@ -243,23 +208,23 @@ watch(search, (newVal: string) => {
     <template #btn-area>
       <ElInput :placeholder="`搜索标题、作者、内容...`" v-model="search" style="margin-right: 25px; width: 250px"
                :suffix-icon="Search"/>
-      <ElButton @click="state = true" type="primary">添加动态</ElButton>
+      <ElButton @click="dialogState = true" type="primary">添加动态</ElButton>
     </template>
     <template #content>
       <ElTable @sort-change="handleSortChange" :table-layout="'fixed'" :data="tableData">
         <ElTableColumn align="center" show-overflow-tooltip prop="Title" label="动态标题">
           <template #default="scope">
-            <p v-html="keywords(scope.row.title)"></p>
+            <p v-html="keywords(scope.row.title, search)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Author" label="动态作者">
           <template #default="scope">
-            <p v-html="keywords(scope.row.author)"></p>
+            <p v-html="keywords(scope.row.author, search)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Ellipsis" label="动态内容">
           <template #default="scope">
-            <p v-html="keywords(scope.row.ellipsis)"></p>
+            <p v-html="keywords(scope.row.ellipsis, search)"></p>
           </template>
         </ElTableColumn>
         <ElTableColumn align="center" show-overflow-tooltip prop="Date" sortable label="更新日期">
@@ -269,7 +234,7 @@ watch(search, (newVal: string) => {
         </ElTableColumn>
         <ElTableColumn align="center" prop="Operations" label="操作">
           <template #default="scope">
-            <ElButton size="small" type="primary" @click="edit(scope.row._id)">编辑</ElButton>
+            <ElButton size="small" type="primary" @click="goEdit(scope.row._id)">编辑</ElButton>
             <ElButton size="small" type="danger" @click="handleDelete(scope.row._id)">删除</ElButton>
           </template>
         </ElTableColumn>

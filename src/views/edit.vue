@@ -1,32 +1,31 @@
 <script setup lang="ts">
-import {onBeforeUnmount, ref, shallowRef, onMounted, nextTick, computed} from 'vue'
+import {onBeforeUnmount, ref, shallowRef, onMounted, computed} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 import {apiUrl} from "@/config"
-import {deepClone} from "@/utils";
+import {deepClone, getImageName, imageRemove, imageError} from "@/utils";
 import {ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElUpload, ElDialog, ElIcon} from "element-plus";
 import {useRouter} from 'vue-router';
 import {storeToRefs} from "pinia";
+import {Close} from "@element-plus/icons-vue";
 import axios from "axios";
 import defaultStore from "@/store"
 import '@wangeditor/editor/dist/css/style.css'
 import type {UploadFile} from "element-plus";
-import type {Ref, PropType} from 'vue'
+import type {Ref, PropType, ComputedRef} from 'vue'
 import type {IAbridgeUpdatesView, IAbridgeUpdatesContent} from "@/types"
 import type {IEditorConfig, IToolbarConfig, IDomEditor} from '@wangeditor/editor'
-import {Close} from "@element-plus/icons-vue";
 
 const store = defaultStore()
 const router = useRouter();
-
 const {updateId} = storeToRefs(store)
 
 const imageRef: Ref<HTMLImageElement | null> = ref(null)
-
-const coverSrc = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {imgSrc: string})?.imgSrc)
-
+const coverSrc: ComputedRef<string> = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {
+  imgSrc: string
+})?.imgSrc)
 const editorRef = shallowRef(null)
-
 const cover: Ref<Array<UploadFile>> = ref([])
+const backState: Ref<boolean> = ref(false);
 
 const formData: IAbridgeUpdatesView & IAbridgeUpdatesContent = {
   title: "",
@@ -50,7 +49,7 @@ const editorConfig: Partial<IEditorConfig> = {
       server: `${apiUrl}/updates/upload`,
       allowedFileTypes: ['image/png', 'image/jpeg'],
       customInsert(res: any, insertFn: (url: string, alt: string, href: string) => void) {
-        const {imgSrc} = res as {imgSrc: string}
+        const {imgSrc} = res as { imgSrc: string }
         insertFn(imgSrc, "", "")
       },
     }
@@ -59,7 +58,7 @@ const editorConfig: Partial<IEditorConfig> = {
 
 const getData = async (): Promise<void> => {
   try {
-    const data =  await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
+    const data = await axios.get(`${apiUrl}/updates/search`, {params: {_id: updateId.value}})
     form.value = data.data[0]
     const cover_ = form.value.cover
     cover.value = [{
@@ -76,21 +75,7 @@ const getData = async (): Promise<void> => {
   }
 }
 
-onMounted(async () => await getData())
-
-onBeforeUnmount(() => {
-  const editor = editorRef.value
-  if (editor == null) return
-  editor.destroy()
-})
-
-const getImageName = (url: string): string | null => url.match(new RegExp(/\/([^\/]+\..+\/?)/))[1]
-
-const handleCreated = (editor: PropType<IDomEditor>): void => {
-  editorRef.value = editor
-}
-
-const backState: Ref<boolean> = ref(false);
+const handleCreated = (editor: PropType<IDomEditor>): PropType<IDomEditor> => editorRef.value = editor
 
 const back = (): void => {
   backState.value = false
@@ -116,21 +101,13 @@ const saveData = async (): Promise<void> => {
   }
 }
 
-const handleRemove = (file: UploadFile): void => {
-  const index = cover.value.indexOf(file);
-  if (index > -1) cover.value.splice(index, 1);
-}
+onMounted(async () => await getData())
 
-const handleImageError = (file: UploadFile): void => {
-  const maxRetries = 3;
-  let retries = 0;
-  const retryLoad = () => {
-    retries++;
-    retries <= maxRetries ? setTimeout(() => nextTick(() => imageRef.value.src = coverSrc.value), 1000 * retries) : file.url = 'https://via.placeholder.com/150'
-  };
-  retryLoad();
-}
-
+onBeforeUnmount(() => {
+  const editor = editorRef.value
+  if (editor == null) return
+  editor.destroy()
+})
 </script>
 
 <template>
@@ -159,8 +136,8 @@ const handleImageError = (file: UploadFile): void => {
             </template>
             <template #file="{file}">
               <div class="file">
-                <img @error="handleImageError(file)" ref="imageRef" :src="coverSrc" alt="?">
-                <span @click="handleRemove(file)">
+                <img @error="imageError(imageRef, coverSrc)" ref="imageRef" :src="coverSrc" alt="?">
+                <span @click="imageRemove(file, cover)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>
