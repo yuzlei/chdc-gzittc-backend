@@ -1,7 +1,7 @@
 import {nextTick} from "vue";
 import {ElMessage} from "element-plus";
-import type {UploadRawFile, UploadFile} from "element-plus";
 import {apiUrl} from "@/config";
+import type {UploadRawFile, UploadFile} from "element-plus";
 
 const deepClone = <T>(data: T): T => {
     if (typeof data !== 'object' || data === null) return data;

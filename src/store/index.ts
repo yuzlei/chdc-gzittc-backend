@@ -12,4 +12,8 @@ export default defineStore("defineStore", () => {
         limit,
         setUpdateId,
     }
+}, {
+    persist: {
+        pick: ['updateId'],
+    },
 })

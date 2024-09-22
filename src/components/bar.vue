@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ElMenu, ElMenuItem, ElIcon} from "element-plus"
-import {IBarList} from "@/types";
+import type {IBarList} from "@/types";
 
 defineProps<{ bar: IBarList, active: string }>();
 </script>
