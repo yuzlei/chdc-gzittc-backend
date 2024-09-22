@@ -57,7 +57,7 @@ const editorConfig: Partial<IEditorConfig> = {
   }
 }
 
-const replaceContent = (str: string, reversal: boolean = true): string => reversal ? str.replace(/src=["'](\/.+\.(png|jpg|jpeg)\/?)["']/g, ((_, url: string) => `src="${apiUrl}${url}"`)) : str.replace(/src=["'](\/.+\.(png|jpg|jpeg)\/?)["']/g, ((_, url: string) => `src="${url}"`))
+const replaceContent = (str: string, reversal: boolean = true): string => reversal ? str.replaceAll(/<img[^>]+src="([^">]+)"/g, ((_, url: string) => `<img src="${apiUrl}${url}"`)) : str.replaceAll(new RegExp(`${apiUrl}`, "g"), '')
 
 const getData = async (): Promise<void> => {
   try {
