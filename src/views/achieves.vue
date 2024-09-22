@@ -253,17 +253,17 @@ onMounted(async () => await getData(params.value))
     </template>
     <template #content>
       <ElTable @sort-change="handleSortChange" :table-layout="'fixed'" :data="tableData">
-        <ElTableColumn align="center" show-overflow-tooltip prop="Title" label="成就标题">
+        <ElTableColumn :align="'center'" show-overflow-tooltip prop="Title" label="成就标题">
           <template #default="scope">
             <p v-html="keywords(scope.row.name, search)"></p>
           </template>
         </ElTableColumn>
-        <ElTableColumn align="center" show-overflow-tooltip prop="Date" sortable label="更新日期">
+        <ElTableColumn :align="'center'" show-overflow-tooltip prop="Date" sortable label="更新日期">
           <template #default="scope">
             <span>{{ formatTime(scope.row.createdAt) }}</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn align="center" prop="Operations" label="操作">
+        <ElTableColumn :align="'center'" prop="Operations" label="操作">
           <template #default="scope">
             <ElButton size="small" type="primary" @click="edit(scope.row._id)">编辑</ElButton>
             <ElButton size="small" type="danger" @click="handleDelete(scope.row._id)">删除</ElButton>
