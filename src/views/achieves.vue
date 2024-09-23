@@ -87,7 +87,8 @@ const deleteUpdate = async (): Promise<void> => {
       type: 'success'
     })
     await getData(params.value)
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '删除成就失败',
       type: 'error'
@@ -146,7 +147,8 @@ const upload = async (): Promise<void> => {
       type: 'success'
     })
     await getData(params.value)
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '添加成就失败',
       type: 'error'
@@ -165,7 +167,8 @@ const handleEdit = async (): Promise<void> => {
       type: 'success'
     })
     await getData(params.value)
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '修改成就失败',
       type: 'error'
@@ -188,6 +191,7 @@ const getIdData = async (): Promise<void> => {
       uid: 0,
     }]
   } catch (err) {
+    console.error(err)
     ElMessage({
       message: '获取数据失败',
       type: 'error'

@@ -24,7 +24,7 @@ import {
   imageRemove,
   imageError,
   imageBeforeUpload,
-  completeImagePath, getImageName
+  completeImagePath
 } from "@/utils"
 import axios from "axios"
 import router from "@/router";
@@ -105,7 +105,8 @@ const deleteUpdate = async (): Promise<void> => {
       type: 'success'
     })
     await getData(params.value)
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '删除动态失败',
       type: 'error'
@@ -136,7 +137,8 @@ const upload = async (): Promise<void> => {
       type: 'success'
     })
     await getData(params.value)
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '添加动态失败',
       type: 'error'

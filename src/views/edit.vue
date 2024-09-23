@@ -82,6 +82,7 @@ const getData = async (): Promise<void> => {
       uid: 0,
     }]
   } catch (err) {
+    console.error(err)
     ElMessage({
       message: '获取数据失败',
       type: 'error'
@@ -114,7 +115,8 @@ const saveData = async (): Promise<void> => {
       message: '保存成功',
       type: 'success'
     })
-  } catch (e) {
+  } catch (err) {
+    console.error(err)
     ElMessage({
       message: '保存失败',
       type: 'error'
