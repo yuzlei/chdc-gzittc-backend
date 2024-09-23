@@ -1,3 +1,5 @@
+import type {SlateElement} from '@wangeditor/editor'
+
 interface IBar {
     _id?: string,
     name: string,
@@ -43,6 +45,13 @@ interface IAbridgeUpdatesContent {
     content_text: string
 }
 
+type ImageElement = SlateElement & {
+    src: string
+    alt: string
+    url: string
+    href: string
+} | null
+
 export {
     IBar,
     IBarList,
@@ -53,4 +62,5 @@ export {
     IAbridgeUpdatesView,
     IAbridgeUpdatesViewList,
     IAbridgeUpdatesContent,
+    ImageElement
 }

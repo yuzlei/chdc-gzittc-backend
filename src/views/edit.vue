@@ -11,8 +11,9 @@ import axios from "axios";
 import defaultStore from "@/store"
 import '@wangeditor/editor/dist/css/style.css'
 import type {UploadFile} from "element-plus";
-import type {Ref, PropType, ComputedRef} from 'vue'
-import type {IAbridgeUpdatesView, IAbridgeUpdatesContent} from "@/types"
+import type {Ref, ComputedRef, ShallowRef} from 'vue'
+import type {IAbridgeUpdatesView, IAbridgeUpdatesContent, ImageElement} from "@/types"
+import type {ElementWithId} from '@wangeditor/core'
 import type {IEditorConfig, IToolbarConfig, IDomEditor} from '@wangeditor/editor'
 
 const store = defaultStore()
@@ -23,7 +24,8 @@ const imageRef: Ref<HTMLImageElement | null> = ref(null)
 const coverSrc: ComputedRef<string> = computed(() => cover.value?.[0]?.url || (cover.value?.[0]?.response as {
   imgSrc: string
 })?.imgSrc)
-const editorRef = shallowRef(null)
+const imageList: Ref<Array<string>> = ref([])
+const editorRef: ShallowRef<IDomEditor | null> = shallowRef(null)
 const cover: Ref<Array<UploadFile>> = ref([])
 const backState: Ref<boolean> = ref(false);
 const url: string = `${apiUrl}/updates`
@@ -52,6 +54,11 @@ const editorConfig: Partial<IEditorConfig> = {
       customInsert(res: any, insertFn: (url: string, alt: string, href: string) => void) {
         const {imgSrc} = res as { imgSrc: string }
         insertFn(imgSrc, "", "")
+      },
+    },
+    'insertImage': {
+      onInsertedImage(imageNode: ImageElement) {
+        imageList.value.push(imageNode.src)
       },
     }
   }
@@ -82,7 +89,7 @@ const getData = async (): Promise<void> => {
   }
 }
 
-const handleCreated = (editor: PropType<IDomEditor>): PropType<IDomEditor> => editorRef.value = editor
+const handleCreated = (editor: IDomEditor): IDomEditor => editorRef.value = editor
 
 const back = (): void => {
   backState.value = false
@@ -91,6 +98,10 @@ const back = (): void => {
 
 const saveData = async (): Promise<void> => {
   try {
+    const images: string = imageList.value.filter(item => !editorRef.value.getElemsByType('image').map((item: ElementWithId & {
+      src: string
+    }) => item.src).includes(item)).map(item => getImageName(item)).join(",")
+    if (images.replaceAll(/ /g, '') !== "") await axios.delete(`${url}/clear`, {params: {images}})
     const doc = new DOMParser().parseFromString(form.value.content, 'text/html')
     form.value.content_text = doc.body.textContent || doc.body.innerText
     form.value.ellipsis = form.value.content_text.slice(0, 50);
@@ -111,13 +122,12 @@ const saveData = async (): Promise<void> => {
   }
 }
 
-onMounted(async () => await getData())
-
-onBeforeUnmount(() => {
-  const editor = editorRef.value
-  if (editor == null) return
-  editor.destroy()
+onMounted(async () => {
+  await getData()
+  imageList.value = form.value.content.match(/<img[^>]+src="([^">]+)"/g)?.map((imgTag: string): string => imgTag.match(/src="([^"]+)"/)?.[1]) || []
 })
+
+onBeforeUnmount(() => editorRef.value.destroy())
 </script>
 
 <template>
@@ -148,7 +158,7 @@ onBeforeUnmount(() => {
             <template #file="{file}">
               <div class="file">
                 <img @error="imageError(imageRef, coverSrc)" ref="imageRef" :src="coverSrc" alt="?">
-                <span @click="imageRemove(file, cover)">
+                <span @click="imageRemove(file, cover, coverSrc,`${url}/clear`)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>

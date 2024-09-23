@@ -1,6 +1,7 @@
 import {nextTick} from "vue";
 import {ElMessage} from "element-plus";
 import {apiUrl} from "@/config";
+import axios from "axios";
 import type {UploadRawFile, UploadFile} from "element-plus";
 
 const deepClone = <T>(data: T): T => {
@@ -39,9 +40,10 @@ const keywords = (str: string, search: string): string => search === "" ? str : 
 
 const getImageName = (url: string): string | null => url.match(new RegExp(/\/([^\/]+\..+\/?)/))[1]
 
-const imageRemove = (file: UploadFile, imgList: Array<UploadFile>): void => {
+const imageRemove = async (file: UploadFile, imgList: Array<UploadFile>, deleteFileUrl: string, url: string): Promise<void> => {
     const index: number = imgList.indexOf(file);
     index > -1 ? imgList.splice(index, 1) : null
+    await axios.delete(url, {params: {images: getImageName(deleteFileUrl)}})
 }
 
 const imageError = (imgRef: HTMLImageElement, imgSrc: string): void => {

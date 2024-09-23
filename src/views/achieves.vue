@@ -100,7 +100,7 @@ const deleteUpdate = async (): Promise<void> => {
 
 const getData = async (params: Record<string, any>): Promise<void> => {
   let {data: {data, pageTotal: _pageTotal}} = await axios.get(`${url}/pages_condition`, {params})
-  data.forEach((item: IAchieve) => item.imgSrc = completeImagePath(item.imgSrc))
+  for (const item of data) item.imgSrc = completeImagePath(item.imgSrc)
   pageTotal.value = _pageTotal
   tableData.value = deepClone(data)
   tableNormalData = deepClone(data)
@@ -178,7 +178,7 @@ const handleEdit = async (): Promise<void> => {
 const getIdData = async (): Promise<void> => {
   try {
     const data = await axios.get(`${url}/search`, {params: {_id: updateId.value}})
-    data.data.forEach((item: IAchieve) => item.imgSrc = completeImagePath(item.imgSrc))
+    for (const item of data.data) item.imgSrc = completeImagePath(item.imgSrc)
     form.value = data.data[0]
     const imgSrc_ = form.value.imgSrc
     img.value = [{
@@ -227,7 +227,7 @@ onMounted(async () => await getData(params.value))
           <template #file="{file}">
             <div class="file">
               <img @error="imageError(imageRef, imgSrc)" ref="imageRef" :src="imgSrc" alt="?">
-              <span @click="imageRemove(file, img)">
+              <span @click="imageRemove(file, img, imgSrc,`${url}/clear`)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>

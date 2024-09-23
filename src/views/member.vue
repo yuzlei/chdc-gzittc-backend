@@ -285,7 +285,7 @@ onMounted(async () => await getData(params.value))
           <template #file="{file}">
             <div class="file">
               <img @error="imageError(imageRef, imgSrc)" ref="imageRef" :src="imgSrc" alt="?">
-              <span @click="imageRemove(file, img)">
+              <span @click="imageRemove(file, img, imgSrc,`${url}/clear`)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>

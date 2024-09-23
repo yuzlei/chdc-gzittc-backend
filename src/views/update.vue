@@ -24,7 +24,7 @@ import {
   imageRemove,
   imageError,
   imageBeforeUpload,
-  completeImagePath
+  completeImagePath, getImageName
 } from "@/utils"
 import axios from "axios"
 import router from "@/router";
@@ -198,7 +198,7 @@ onMounted(async () => await getData(params.value))
           <template #file="{file}">
             <div class="file">
               <img @error="imageError(imageRef, coverSrc)" ref="imageRef" :src="coverSrc" alt="?">
-              <span @click="imageRemove(file, cover)">
+              <span @click="imageRemove(file, cover, coverSrc, `${url}/clear`)">
                 <ElIcon>
                   <Close/>
                 </ElIcon>
